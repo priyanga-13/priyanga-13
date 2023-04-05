@@ -1,0 +1,110 @@
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+public class ProductcsvWriter {
+
+    private static final String CSV_FILE_PATH = "products.csv";
+    private static final String URL = "https://www.staples.com/Computer-office-desks/cat_CL210795/663ea?icid=BTS:2020:STUDYSPACE:DESKS";
+
+    public static void main(String[] args) {
+        // Extract products from the URL
+        List<Product> products = extractProductsFromUrl(URL);
+
+        // Write products to CSV file
+        writeProductsToCsv(products);
+    }
+
+    private static List<Product> extractProductsFromUrl(String url) {
+        List<Product> products = new ArrayList<>();
+
+        try {
+            Document doc = Jsoup.connect(url).get();
+            Elements productElements = doc.select("div[data-analytics-product-info]");
+            for (int i = 0; i < productElements.size() && i < 10; i++) {
+                Element productElement = productElements.get(i);
+                String name = productElement.attr("data-analytics-product-name");
+                double price = Double.parseDouble(productElement.attr("data-analytics-product-price"));
+                String itemNumber = productElement.attr("data-analytics-product-sku");
+                String modelNumber = productElement.attr("data-analytics-product-model-number");
+                String category = "Computer Office Desks";
+                String description = productElement.attr("data-analytics-product-description");
+
+                products.add(new Product(name, price, itemNumber, modelNumber, category, description));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return products;
+    }
+
+    private static void writeProductsToCsv(List<Product> products) {
+        try (FileWriter writer = new FileWriter(CSV_FILE_PATH)) {
+            // Write header row
+            writer.append("Product Name,Product Price,Item Number,Model Number,Product Category,Product Description\n");
+
+            // Write data rows
+            for (Product product : products) {
+                writer.append(product.getName()).append(",")
+                        .append(String.valueOf(product.getPrice())).append(",")
+                        .append(product.getItemNumber()).append(",")
+                        .append(product.getModelNumber()).append(",")
+                        .append(product.getCategory()).append(",")
+                        .append(product.getDescription()).append("\n");
+            }
+
+            System.out.println("Products written to CSV file successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static class Product {
+        private String name;
+        private double price;
+        private String itemNumber;
+        private String modelNumber;
+        private String category;
+        private String description;
+
+        public Product(String name, double price, String itemNumber, String modelNumber, String category, String description) {
+            this.name = name;
+            this.price = price;
+            this.itemNumber = itemNumber;
+            this.modelNumber = modelNumber;
+            this.category = category;
+            this.description = description;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public double getPrice() {
+            return price;
+        }
+
+        public String getItemNumber() {
+            return itemNumber;
+        }
+
+        public String getModelNumber() {
+            return modelNumber;
+        }
+
+        public String getCategory() {
+            return category;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
+}
